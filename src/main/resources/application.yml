@@ -1,0 +1,15 @@
+server:
+  port: 8070
+
+spring:
+  datasource:
+    url: jdbc:mysql://118.31.38.254:3306/test_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: Zzy20020913.
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  configuration:
+    mapUnderscoreToCamelCase: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 控制台打印 SQL
