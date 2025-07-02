@@ -74,10 +74,10 @@ public class JwtUtil {
     public void init() {
         // 确保密钥长度足够安全（至少32字符）
         if (secretKey.length() < 32) {
-            secretKey = secretKey + "0123456789abcdefghijklmnopqrstuvwxyz";
+            secretKey = secretKey + "UoL@f8YP#rKWZ9XtE3bGjMCd76qvN1AsXz!Np2GcV@87jYKqRUM#wfLBtd9A3Er5";
         }
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
-        log.info("JWT工具类初始化完成，过期时间: {}小时, 刷新时间: {}小时", expirationHours, refreshHours);
+//        log.info("JWT工具类初始化完成，过期时间: {}小时, 刷新时间: {}小时", expirationHours, refreshHours);
     }
     
     /**
@@ -87,7 +87,7 @@ public class JwtUtil {
      * @param username 用户名
      * @return JWT令牌字符串
      */
-    public String generateToken(Long userId, String username) {
+    public String generateAccessToken(Long userId, String username) {
         if (userId == null || StrUtil.isBlank(username)) {
             throw new AuthException("用户ID和用户名不能为空");
         }
@@ -305,7 +305,7 @@ public class JwtUtil {
             Long userId = getUserIdFromToken(token);
             String username = getUsernameFromToken(token);
             
-            String newToken = generateToken(userId, username);
+            String newToken = generateAccessToken(userId, username);
             log.info("刷新JWT令牌成功，用户ID: {}, 用户名: {}", userId, username);
             
             return newToken;

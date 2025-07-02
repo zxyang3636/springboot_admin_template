@@ -28,10 +28,7 @@ public class UserContextHolder {
             return;
         }
 
-        CONTEXT_HOLDER.set(userContext);
-        log.debug("设置用户上下文成功，用户ID: {}, 用户名: {}",
-                userContext.getUserId(), userContext.getUsername());
-    }
+        CONTEXT_HOLDER.set(userContext);}
 
     /**
      * 获取当前用户上下文

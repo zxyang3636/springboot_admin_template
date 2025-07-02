@@ -18,7 +18,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class UserVO {
-    private String token;
+    private String accessToken;
+    private String refreshToken;
     private String avatar;
     private String username;
+    private String nickname;
 }

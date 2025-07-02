@@ -36,9 +36,6 @@ public class UserContextService {
      * @param timeoutMinutes 超时时间（分钟），如果为null则使用默认超时时间
      */
     public void saveUserContext(String token, UserContext userContext, Long timeoutMinutes) {
-        if (StrUtil.isBlank(token)) {
-            throw new AuthException("会话令牌不能为空");
-        }
 
         if (userContext == null) {
             throw new AuthException("用户上下文信息不能为空");
@@ -46,16 +43,6 @@ public class UserContextService {
 
         try {
             String key = buildContextKey(token);
-            long timeout = timeoutMinutes != null ? timeoutMinutes : DEFAULT_TIMEOUT;
-
-            // 设置token到用户上下文中
-            userContext.setToken(token);
-
-            // 保存到Redis
-            redisTemplate.opsForValue().set(key, userContext, timeout, TimeUnit.MINUTES);
-
-            log.info("保存用户上下文成功，用户ID: {}, 用户名: {}, 令牌: {}, 超时时间: {}分钟",
-                    userContext.getUserId(), userContext.getUsername(), token, timeout);
 
         } catch (Exception e) {
             log.error("保存用户上下文失败，令牌: {}", token, e);
@@ -90,8 +77,6 @@ public class UserContextService {
 
             if (obj instanceof UserContext) {
                 UserContext userContext = (UserContext) obj;
-                log.debug("获取用户上下文成功，用户ID: {}, 用户名: {}",
-                        userContext.getUserId(), userContext.getUsername());
                 return userContext;
             }
 
@@ -135,32 +120,7 @@ public class UserContextService {
         }
     }
 
-    /**
-     * 删除用户上下文（退出登录）
-     * 
-     * @param token 会话令牌
-     * @return true-删除成功，false-删除失败
-     */
-    public boolean removeUserContext(String token) {
-        if (StrUtil.isBlank(token)) {
-            return false;
-        }
 
-        try {
-            String key = buildContextKey(token);
-            Boolean result = redisTemplate.delete(key);
-
-            if (Boolean.TRUE.equals(result)) {
-                return true;
-            }
-
-            return false;
-
-        } catch (Exception e) {
-            log.error("删除用户上下文异常，令牌: {}", token, e);
-            return false;
-        }
-    }
 
     /**
      * 检查令牌是否有效
