@@ -46,12 +46,14 @@ build/
 *.log
 *.log.*
 /logs/
-application-*.yml
-application-*.yaml
-application-*.properties
-!application.yml
-!application.yaml
-!application.properties
+# 忽略包含敏感信息的实际配置文件
+application.yml
+application.yaml
+application.properties
+application-dev.yml
+application-test.yml
+application-prod.yml
+# 保留配置模板文件
 !application-example.*
 
 ### OS ###
