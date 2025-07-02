@@ -13,3 +13,11 @@ mybatis-plus:
   configuration:
     mapUnderscoreToCamelCase: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 控制台打印 SQL
+
+# JWT 配置
+jwt:
+  secret: gP#73YvUq!4rEwzX1@cN9kDf
+  expiration: 24    # 访问令牌过期时间（小时）
+  refresh: 168      # 刷新令牌过期时间（小时，7天）
+  token-prefix: "Bearer "
+  header: "Authorization"

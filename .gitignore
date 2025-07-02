@@ -1,3 +1,4 @@
+# Maven
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -8,9 +9,16 @@ target/
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries
+.idea/shelf/
+.idea/vcs.xml
 *.iws
 *.iml
 *.ipr
+out/
 
 ### Eclipse ###
 .apt_generated
@@ -34,5 +42,36 @@ build/
 ### VS Code ###
 .vscode/
 
-### Mac OS ###
+### Spring Boot ###
+*.log
+*.log.*
+/logs/
+application-*.yml
+application-*.yaml
+application-*.properties
+!application.yml
+!application.yaml
+!application.properties
+!application-example.*
+
+### OS ###
+# Mac OS
 .DS_Store
+.DS_Store?
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+# Linux
+*~
+
+### Other ###
+*.tmp
+*.temp
+.cache
+*.pid
+*.seed
+*.pid.lock
+.env
+.env.local
+.env.*.local
