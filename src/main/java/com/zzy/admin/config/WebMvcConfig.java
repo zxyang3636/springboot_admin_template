@@ -21,7 +21,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(loginInterceptor)
                 .addPathPatterns("/**") // 拦截所有请求
                 .excludePathPatterns(
-                        "/user/login"      // 登录接口
+                        "/user/login",     // 登录接口
+                        "/user/refresh",   // 刷新令牌接口
+                        "/user/logout"     // 退出登录接口
                 );
     }
 }

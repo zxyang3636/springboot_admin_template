@@ -20,10 +20,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-
+import io.jsonwebtoken.Claims;
 import com.zzy.admin.domain.po.SysUser;
 import com.zzy.admin.mapper.SysUserMapper;
 import com.zzy.admin.service.SysUserService;
+
 
 @Service
 @RequiredArgsConstructor
@@ -60,11 +61,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             throw new BusinessException("账号或密码错误");
         }
         // 签发
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), username);
-        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), username);
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), username, user.getNickname());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), username, user.getNickname());
         redisTemplate.opsForValue().set(RedisConstant.REFRESH_KEY + user.getId(), refreshToken, hour, TimeUnit.HOURS);
         // 保存用户上下文
-        buildUserContext(user);
+        // buildUserContext(user);
         UserVO userVO = buildUserVO(user, accessToken, refreshToken);
         return Result.success("登录成功", userVO);
     }
@@ -82,7 +83,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             // 2. 从刷新令牌中获取用户信息
             Long userId = jwtUtil.getUserIdFromToken(refreshToken);
             String username = jwtUtil.getUsernameFromToken(refreshToken);
-
+            String nickname = jwtUtil.getNicknameFromToken(refreshToken);
             // 3. 检查Redis中是否存在这个刷新令牌（防止令牌被盗用）
             String storedRefreshToken = (String) redisTemplate.opsForValue().get(RedisConstant.REFRESH_KEY + userId);
             if (!refreshToken.equals(storedRefreshToken)) {
@@ -91,21 +92,15 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
             // 4. 从数据库重新获取用户信息（确保用户状态正常）
             SysUser user = getById(userId);
-            if (user == null || user.getStatus() != 0) {
+            if (user == null || user.getStatus() != 1) {
                 return Result.fail(401, "用户状态异常");
             }
 
             // 5. 生成新的访问令牌
-            String newAccessToken = jwtUtil.generateAccessToken(userId, username);
+            String newAccessToken = jwtUtil.generateAccessToken(userId, username, nickname);
 
-            // 6. 生成新的刷新令牌（可选，提高安全性）
-            String newRefreshToken = jwtUtil.generateRefreshToken(userId, username);
-
-            // 7. 更新Redis中的刷新令牌
-            redisTemplate.opsForValue().set(RedisConstant.REFRESH_KEY + userId, newRefreshToken, hour, TimeUnit.HOURS);
-
-            // 8. 返回新令牌
-            UserVO userVO = buildUserVO(user, newAccessToken, newRefreshToken);
+            // 6. 返回新令牌
+            UserVO userVO = buildUserVO(user, newAccessToken, refreshToken);
             return Result.success(userVO);
 
         } catch (Exception e) {

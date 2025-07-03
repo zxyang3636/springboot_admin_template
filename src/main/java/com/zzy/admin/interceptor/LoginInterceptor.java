@@ -1,5 +1,7 @@
 package com.zzy.admin.interceptor;
 
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -7,7 +9,6 @@ import cn.hutool.core.util.StrUtil;
 import com.zzy.admin.common.UserContext;
 import com.zzy.admin.common.UserContextHolder;
 import com.zzy.admin.exception.AuthException;
-import com.zzy.admin.service.impl.UserContextService;
 import com.zzy.admin.utils.JwtUtil;
 
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -20,8 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class LoginInterceptor implements HandlerInterceptor {
-
-    private final UserContextService userContextService;
 
     private final JwtUtil jwtUtil;
 
@@ -51,17 +50,8 @@ public class LoginInterceptor implements HandlerInterceptor {
                 throw new AuthException();
             }
 
-            // 获取用户上下文
-            UserContext userContext = userContextService.getUserContext(token);
-            if (userContext == null) {
-                throw new AuthException("访问令牌无效或已过期，请重新登录");
-            }
-
-            // 设置用户上下文到ThreadLocal
-            UserContextHolder.setContext(userContext);
-
+            setUserToThreadLocal(token);
             return true;
-
         } catch (AuthException e) {
             throw e;
         } catch (Exception e) {
@@ -70,12 +60,14 @@ public class LoginInterceptor implements HandlerInterceptor {
         }
     }
 
+
+
     /**
      * 请求处理完成后执行
      */
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
-                                Object handler, Exception ex) {
+            Object handler, Exception ex) {
         // 清除用户上下文，避免内存泄漏
         UserContextHolder.clearContext();
     }
@@ -94,6 +86,19 @@ public class LoginInterceptor implements HandlerInterceptor {
         }
 
         return null;
+    }
+
+    private void setUserToThreadLocal(String token) {
+        Map<String, Object> claims = jwtUtil.getAllClaimsFromToken(token);
+        UserContext userContext = new UserContext();
+        Object userIdObj = claims.get("userId");
+        Long userId = userIdObj instanceof Integer ? ((Integer) userIdObj).longValue() : (Long) userIdObj;
+        userContext.setUserId(userId);
+        userContext.setUsername((String) claims.get("username"));
+        userContext.setNickname((String) claims.get("nickname"));
+        userContext.setToken(token);
+        // 设置用户上下文到ThreadLocal
+        UserContextHolder.setContext(userContext);
     }
 
 }

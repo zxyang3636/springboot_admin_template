@@ -76,8 +76,8 @@ public class UserContextHolder {
     public static void clearContext() {
         UserContext context = (UserContext) CONTEXT_HOLDER.get();
         if (context != null) {
-            log.debug("清除用户上下文，用户ID: {}, 用户名: {}",
-                    context.getUserId(), context.getUsername());
+            // log.debug("清除用户上下文，用户ID: {}, 用户名: {}",
+            //         context.getUserId(), context.getUsername());
         }
         CONTEXT_HOLDER.remove();
     }

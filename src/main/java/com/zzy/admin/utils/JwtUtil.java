@@ -34,7 +34,7 @@ public class JwtUtil {
     /**
      * JWT 过期时间（小时）
      */
-    @Value("${jwt.expiration:24}")
+    @Value("${jwt.expiration:2}")
     private Integer expirationHours;
     
     /**
@@ -63,6 +63,10 @@ public class JwtUtil {
      */
     private static final String USERNAME_KEY = "username";
     
+    /**
+     * JWT 中用户名的键名
+     */
+    private static final String NICKNAME_KEY = "nickname";
 
     
 
@@ -87,7 +91,7 @@ public class JwtUtil {
      * @param username 用户名
      * @return JWT令牌字符串
      */
-    public String generateAccessToken(Long userId, String username) {
+    public String generateAccessToken(Long userId, String username, String nickname) {
         if (userId == null || StrUtil.isBlank(username)) {
             throw new AuthException("用户ID和用户名不能为空");
         }
@@ -95,11 +99,13 @@ public class JwtUtil {
         try {
             Date now = new Date();
             Date expiration = DateUtil.offsetHour(now, expirationHours);
+            // Date expiration = DateUtil.offsetMinute(now, 1); // 测试用：1分钟过期
             
             // 构建JWT载荷
             Map<String, Object> claims = new HashMap<>();
             claims.put(USER_ID_KEY, userId);
             claims.put(USERNAME_KEY, username);
+            claims.put(NICKNAME_KEY, nickname);
             
             // 生成JWT
             String token = Jwts.builder()
@@ -111,7 +117,7 @@ public class JwtUtil {
                     .claim("type", "access")
                     .compact();
             
-            log.debug("生成JWT成功，用户ID: {}, 用户名: {}, 过期时间: {}", userId, username, expiration);
+            // log.debug("生成JWT成功，用户ID: {}, 用户名: {}, 过期时间: {}", userId, username, expiration);
             return token;
             
         } catch (Exception e) {
@@ -127,7 +133,7 @@ public class JwtUtil {
      * @param username 用户名
      * @return 刷新令牌字符串
      */
-    public String generateRefreshToken(Long userId, String username) {
+    public String generateRefreshToken(Long userId, String username, String nickname) {
         if (userId == null || StrUtil.isBlank(username)) {
             throw new AuthException("用户ID和用户名不能为空");
         }
@@ -135,11 +141,13 @@ public class JwtUtil {
         try {
             Date now = new Date();
             Date expiration = DateUtil.offsetHour(now, refreshHours);
+            // Date expiration = DateUtil.offsetMinute(now, 2); // 测试用：2分钟过期
             
             // 刷新令牌只包含基本信息
             Map<String, Object> claims = new HashMap<>();
             claims.put(USER_ID_KEY, userId);
             claims.put(USERNAME_KEY, username);
+            claims.put(NICKNAME_KEY, nickname);
             claims.put("type", "refresh");
             
             String refreshToken = Jwts.builder()
@@ -151,7 +159,7 @@ public class JwtUtil {
                     .claim("type", "refresh")
                     .compact();
             
-            log.debug("生成刷新令牌成功，用户ID: {}, 用户名: {}, 过期时间: {}", userId, username, expiration);
+            // log.debug("生成刷新令牌成功，用户ID: {}, 用户名: {}, 过期时间: {}", userId, username, expiration);
             return refreshToken;
             
         } catch (Exception e) {
@@ -181,19 +189,19 @@ public class JwtUtil {
                     .getBody();
             
         } catch (ExpiredJwtException e) {
-            log.warn("JWT令牌已过期: {}", e.getMessage());
+            // log.warn("JWT令牌已过期: {}", e.getMessage());
             throw new AuthException("访问令牌已过期，请重新登录");
         } catch (UnsupportedJwtException e) {
-            log.warn("不支持的JWT令牌: {}", e.getMessage());
+            // log.warn("不支持的JWT令牌: {}", e.getMessage());
             throw new AuthException("不支持的令牌格式");
         } catch (MalformedJwtException e) {
-            log.warn("JWT令牌格式错误: {}", e.getMessage());
+            // log.warn("JWT令牌格式错误: {}", e.getMessage());
             throw new AuthException("令牌格式错误");
         } catch (SecurityException e) {
-            log.warn("JWT令牌签名验证失败: {}", e.getMessage());
+            // log.warn("JWT令牌签名验证失败: {}", e.getMessage());
             throw new AuthException("令牌签名验证失败");
         } catch (IllegalArgumentException e) {
-            log.warn("JWT令牌参数无效: {}", e.getMessage());
+            // log.warn("JWT令牌参数无效: {}", e.getMessage());
             throw new AuthException("令牌参数无效");
         } catch (Exception e) {
             log.error("解析JWT令牌异常", e);
@@ -212,7 +220,7 @@ public class JwtUtil {
             parseToken(token);
             return true;
         } catch (AuthException e) {
-            log.debug("JWT令牌验证失败: {}", e.getMessage());
+            // log.debug("JWT令牌验证失败: {}", e.getMessage());
             return false;
         }
     }
@@ -227,15 +235,17 @@ public class JwtUtil {
         Claims claims = parseToken(token);
         Object userId = claims.get(USER_ID_KEY);
         
-        if (userId instanceof Integer) {
-            return ((Integer) userId).longValue();
-        } else if (userId instanceof Long) {
-            return (Long) userId;
-        } else if (userId instanceof String) {
-            return Long.valueOf((String) userId);
+        try {
+            if (userId instanceof Number) {
+                return ((Number) userId).longValue();
+            } else if (userId instanceof String) {
+                return Long.valueOf((String) userId);
+            } else {
+                throw new AuthException("令牌中用户ID类型无效: " + userId.getClass().getName());
+            }
+        } catch (NumberFormatException e) {
+            throw new AuthException("令牌中用户ID格式错误: " + userId);
         }
-        
-        throw new AuthException("令牌中用户ID格式错误");
     }
     
     /**
@@ -248,7 +258,17 @@ public class JwtUtil {
         Claims claims = parseToken(token);
         return claims.get(USERNAME_KEY, String.class);
     }
-    
+
+    /**
+     * 从令牌中获取用户昵称
+     * 
+     * @param token JWT令牌
+     * @return 用户昵称
+     */
+    public String getNicknameFromToken(String token) {
+        Claims claims = parseToken(token);
+        return claims.get(NICKNAME_KEY, String.class);
+    }
 
     
     /**
@@ -304,8 +324,8 @@ public class JwtUtil {
             
             Long userId = getUserIdFromToken(token);
             String username = getUsernameFromToken(token);
-            
-            String newToken = generateAccessToken(userId, username);
+            String nickname = getNicknameFromToken(token);
+            String newToken = generateAccessToken(userId, username, nickname);
             log.info("刷新JWT令牌成功，用户ID: {}, 用户名: {}", userId, username);
             
             return newToken;

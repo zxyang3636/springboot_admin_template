@@ -11,7 +11,7 @@ public interface SysUserService extends IService<SysUser>{
 
     int batchInsert(List<SysUser> list);
 
-    Result login(SysUser sysUser);
+    Result<?> login(SysUser sysUser);
 
     Result<?> refreshToken(RefreshRequest refreshRequest);
 }

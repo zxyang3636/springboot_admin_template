@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BaseException.class)
     public Result<Void> handleBaseException(BaseException e, HttpServletRequest request) {
-        log.error("业务异常：{}, 请求路径：{}", e.getMessage(), request.getRequestURI(), e);
+        // log.error("业务异常：{}, 请求路径：{}", e.getMessage(), request.getRequestURI(), e);
         return Result.fail(e.getCode(), e.getMessage());
     }
 
@@ -41,7 +41,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BusinessException.class)
     public Result<Void> handleBusinessException(BusinessException e, HttpServletRequest request) {
-        log.warn("业务异常：{}, 请求路径：{}", e.getMessage(), request.getRequestURI());
+        // log.warn("业务异常：{}, 请求路径：{}", e.getMessage(), request.getRequestURI());
         return Result.fail(e.getCode(), e.getMessage());
     }
 
@@ -68,7 +68,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(AuthException.class)
     public Result<Void> handleAuthException(AuthException e, HttpServletRequest request) {
-        log.warn("认证异常：{}, 请求路径：{}", e.getMessage(), request.getRequestURI());
+        // log.warn("认证异常：{}, 请求路径：{}", e.getMessage(), request.getRequestURI());
         return Result.fail(e.getCode(), e.getMessage());
     }
 

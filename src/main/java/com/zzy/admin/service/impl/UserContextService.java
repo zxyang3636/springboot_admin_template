@@ -28,37 +28,37 @@ public class UserContextService {
      */
     private static final long DEFAULT_TIMEOUT = 30;
 
-    /**
-     * 保存用户上下文到Redis
-     * 
-     * @param token          会话令牌
-     * @param userContext    用户上下文信息
-     * @param timeoutMinutes 超时时间（分钟），如果为null则使用默认超时时间
-     */
-    public void saveUserContext(String token, UserContext userContext, Long timeoutMinutes) {
+    // /**
+    //  * 保存用户上下文到Redis
+    //  * 
+    //  * @param token          会话令牌
+    //  * @param userContext    用户上下文信息
+    //  * @param timeoutMinutes 超时时间（分钟），如果为null则使用默认超时时间
+    //  */
+    // public void saveUserContext(String token, UserContext userContext, Long timeoutMinutes) {
 
-        if (userContext == null) {
-            throw new AuthException("用户上下文信息不能为空");
-        }
+    //     if (userContext == null) {
+    //         throw new AuthException("用户上下文信息不能为空");
+    //     }
 
-        try {
-            String key = buildContextKey(token);
+    //     try {
+    //         String key = buildContextKey(token);
 
-        } catch (Exception e) {
-            log.error("保存用户上下文失败，令牌: {}", token, e);
-            throw new AuthException("保存用户会话失败");
-        }
-    }
+    //     } catch (Exception e) {
+    //         log.error("保存用户上下文失败，令牌: {}", token, e);
+    //         throw new AuthException("保存用户会话失败");
+    //     }
+    // }
 
-    /**
-     * 保存用户上下文到Redis（使用默认超时时间）
-     * 
-     * @param token       会话令牌
-     * @param userContext 用户上下文信息
-     */
-    public void saveUserContext(String token, UserContext userContext) {
-        saveUserContext(token, userContext, null);
-    }
+    // /**
+    //  * 保存用户上下文到Redis（使用默认超时时间）
+    //  * 
+    //  * @param token       会话令牌
+    //  * @param userContext 用户上下文信息
+    //  */
+    // public void saveUserContext(String token, UserContext userContext) {
+    //     saveUserContext(token, userContext, null);
+    // }
 
     /**
      * 根据令牌获取用户上下文
