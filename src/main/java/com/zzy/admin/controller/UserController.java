@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.zzy.admin.annotation.LogRecord;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author zzy
  * @className UserController
  * @date 2025/6/30
- * @description TODO
+ * @description 用户控制器
  */
 @RequestMapping("/user")
 @RestController
@@ -40,12 +42,14 @@ public class UserController {
 
 
     @PostMapping("/login")
-    public Result login(@RequestBody SysUser sysUser) {
+    @LogRecord(value = "登录", businessType = "认证")
+    public Result<?> login(@RequestBody SysUser sysUser) {
         return sysUserService.login(sysUser);
     }
 
     @GetMapping("/info")
-    public Result info() {
+    @LogRecord(value = "获取用户信息", businessType = "获取用户信息")
+    public Result<?> info() {
         UserContext userContext = UserContextHolder.getContext();
         UserVO userVO = UserVO.builder()
         .avatar("https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif")
@@ -60,6 +64,7 @@ public class UserController {
      * 退出登录
      */
     @PostMapping("/logout")
+    @LogRecord(value = "退出登录", businessType = "退出登录")
     public Result<Void> logout(HttpServletRequest request) {
         try {
             // 尝试从ThreadLocal获取用户上下文（如果token有效）
@@ -115,6 +120,7 @@ public class UserController {
     }
 
     @PostMapping("/refresh")
+    @LogRecord(value = "刷新令牌", businessType = "认证")
     public Result<?> refreshToken(@RequestBody RefreshRequest refreshRequest) {
         return sysUserService.refreshToken(refreshRequest);
     }

@@ -84,7 +84,11 @@
             <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
-
+        <!-- aop -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
     </dependencies>
 
     <!-- 构建插件 -->
