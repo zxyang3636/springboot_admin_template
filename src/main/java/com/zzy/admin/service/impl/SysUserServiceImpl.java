@@ -93,7 +93,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
 
             // 4. 从数据库重新获取用户信息（确保用户状态正常）
             SysUser user = getById(userId);
-            if (user == null || user.getStatus() != 1) {
+            if (user == null || user.getStatus() != 0) {
                 return Result.fail(401, "用户状态异常");
             }
 
@@ -137,7 +137,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             if (userId != null) {
                 // 删除刷新令牌
                 redisTemplate.delete(RedisConstant.REFRESH_KEY + userId);
-                log.info("用户退出登录成功，用户ID: {}", userId);
+//                log.info("用户退出登录成功，用户ID: {}", userId);
             } else {
                 log.info("用户退出登录，但无法获取用户ID");
             }
@@ -152,6 +152,18 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             // 即使出现异常，也返回成功，因为退出登录应该总是成功的
             return Result.success();
         }
+    }
+
+    @Override
+    public Result<?> info() {
+        Long userId = UserContextHolder.getCurrentUserId();
+        SysUser sysUser = getById(userId);
+        UserVO userVO = UserVO.builder()
+                .avatar(sysUser.getAvatar())
+                .username(sysUser.getUsername())
+                .nickname(sysUser.getNickname())
+                .build();
+        return Result.success(userVO);
     }
 
     private UserVO buildUserVO(SysUser user, String accessToken, String refreshToken) {

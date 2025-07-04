@@ -18,4 +18,6 @@ public interface SysUserService extends IService<SysUser>{
     Result<?> refreshToken(RefreshRequest refreshRequest);
 
     Result<Void> logout(HttpServletRequest request);
+
+    Result<?> info();
 }

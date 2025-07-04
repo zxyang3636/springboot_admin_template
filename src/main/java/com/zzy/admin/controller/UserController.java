@@ -46,15 +46,8 @@ public class UserController {
      * 获取用户信息
      */
     @GetMapping("/info")
-    @LogRecord(value = "获取用户信息", businessType = "获取用户信息")
     public Result<?> info() {
-        UserContext userContext = UserContextHolder.getContext();
-        UserVO userVO = UserVO.builder()
-                .avatar("https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif")
-                .username(userContext.getUsername())
-                .nickname(userContext.getNickname())
-                .build();
-        return Result.success(userVO);
+        return sysUserService.info();
     }
 
     /**

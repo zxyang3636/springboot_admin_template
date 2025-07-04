@@ -25,7 +25,7 @@ public class LogUtils {
      * 敏感参数字段
      */
     private static final List<String> SENSITIVE_FIELDS = Arrays.asList(
-            "password", "pwd", "token", "secret", "key");
+            "password", "accessToken", "refreshToken", "key");
 
     /**
      * 获取客户端IP地址
