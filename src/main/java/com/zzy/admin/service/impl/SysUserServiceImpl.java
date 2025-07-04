@@ -4,8 +4,6 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.crypto.SecureUtil;
 import com.zzy.admin.common.constant.RedisConstant;
 import com.zzy.admin.common.Result;
-import com.zzy.admin.common.UserContext;
-import com.zzy.admin.common.UserContextHolder;
 import com.zzy.admin.domain.dto.RefreshRequest;
 import com.zzy.admin.domain.vo.UserVO;
 import com.zzy.admin.exception.BusinessException;
@@ -15,17 +13,21 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import io.jsonwebtoken.Claims;
 import com.zzy.admin.domain.po.SysUser;
 import com.zzy.admin.mapper.SysUserMapper;
 import com.zzy.admin.service.SysUserService;
+import com.zzy.admin.common.UserContextHolder;
+import com.zzy.admin.common.UserContext;
+import lombok.extern.slf4j.Slf4j;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements SysUserService {
@@ -64,8 +66,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         String accessToken = jwtUtil.generateAccessToken(user.getId(), username, user.getNickname());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId(), username, user.getNickname());
         redisTemplate.opsForValue().set(RedisConstant.REFRESH_KEY + user.getId(), refreshToken, hour, TimeUnit.HOURS);
-        // 保存用户上下文
-        // buildUserContext(user);
+
         UserVO userVO = buildUserVO(user, accessToken, refreshToken);
         return Result.success("登录成功", userVO);
     }
@@ -109,6 +110,50 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         }
     }
 
+    @Override
+    public Result<Void> logout(HttpServletRequest request) {
+        try {
+            // 尝试从ThreadLocal获取用户上下文（如果token有效）
+            UserContext userContext = UserContextHolder.getContext();
+            Long userId = null;
+            
+            if (userContext != null) {
+                // token有效的情况
+                userId = userContext.getUserId();
+            } else {
+                // token无效的情况，手动解析token获取用户ID
+                String token = extractToken(request);
+                if (token != null) {
+                    try {
+                        // 尝试解析token，即使过期也要获取用户ID
+                        userId = jwtUtil.getUserIdFromToken(token);
+                    } catch (Exception e) {
+                        log.warn("退出登录时token解析失败: {}", e.getMessage());
+                    }
+                }
+            }
+            
+            // 如果获取到了用户ID，清理相关数据
+            if (userId != null) {
+                // 删除刷新令牌
+                redisTemplate.delete(RedisConstant.REFRESH_KEY + userId);
+                log.info("用户退出登录成功，用户ID: {}", userId);
+            } else {
+                log.info("用户退出登录，但无法获取用户ID");
+            }
+            
+            // 清除ThreadLocal（如果有的话）
+            UserContextHolder.clearContext();
+            
+            return Result.success();
+            
+        } catch (Exception e) {
+            log.error("退出登录处理异常", e);
+            // 即使出现异常，也返回成功，因为退出登录应该总是成功的
+            return Result.success();
+        }
+    }
+
     private UserVO buildUserVO(SysUser user, String accessToken, String refreshToken) {
         return UserVO.builder().accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -118,23 +163,20 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 .build();
     }
 
-    private void buildUserContext(SysUser user) {
-        UserContext userContext = new UserContext();
-        userContext.setUserId(user.getId());
-        userContext.setUsername(user.getUsername());
-        userContext.setNickname(user.getNickname());
-        userContext.setEmail(user.getEmail());
-        userContext.setRole(null);
-        userContext.setAvatar(user.getAvatar());
-        userContext.setLoginTime(LocalDateTime.now());
-        userContext.setLoginIp(null);
-        // 保存用户上下文
-        UserContextHolder.setContext(userContext);
-    }
-
     public SysUser queryUser(String username) {
         return lambdaQuery()
                 .eq(SysUser::getUsername, username)
                 .one();
+    }
+
+        /**
+     * 从请求中提取令牌
+     */
+    private String extractToken(HttpServletRequest request) {
+        String authorization = request.getHeader("Authorization");
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            return authorization.substring(7);
+        }
+        return null;
     }
 }

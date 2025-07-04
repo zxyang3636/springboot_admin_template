@@ -10,7 +10,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
  * @author zzy
  * @className com.zzy.admin.App
  * @date 2025/6/30
- * @description TODO
+ * @description 启动类
  */
 @SpringBootApplication
 @EnableAspectJAutoProxy(proxyTargetClass = true) // 启用AOP
