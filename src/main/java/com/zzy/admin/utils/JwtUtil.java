@@ -1,11 +1,14 @@
 package com.zzy.admin.utils;
 
 import javax.annotation.PostConstruct;
-import javax.crypto.SecretKey;
 
+import java.io.InputStream;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.Map;   
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -13,45 +16,30 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.UnsupportedJwtException;
-import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+
+import org.springframework.beans.factory.annotation.Autowired;  
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.zzy.admin.exception.AuthException;
+import com.zzy.admin.config.JwtProperties;
+
 
 @Slf4j
 @Component
 public class JwtUtil {
+    @Autowired
+    private JwtProperties jwtProperties; // 注入JKS配置
 
-    /**
-     * JWT 密钥（从配置文件读取，如果未配置则使用默认值）
-     */
-    @Value("${jwt.secret:gP#73YvUq!4rEwzX1@cN9kDf}")
-    private String secretKey;
-    
-    /**
-     * JWT 过期时间（小时）
-     */
-    @Value("${jwt.expiration:2}")
-    private Integer expirationHours;
-    
-    /**
-     * JWT 刷新时间（小时）
-     */
-    @Value("${jwt.refresh:168}")
-    private Integer refreshHours;
-    
-    /**
-     * JWT 签名算法使用的密钥
-     */
-    private SecretKey key;
-    
+    private PrivateKey privateKey; // 用于签名的私钥
+    private PublicKey publicKey;   // 用于验签的公钥
+
+
     /**
      * JWT 签名算法
      */
-    private static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.HS256;
+    private static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.RS256;  // 使用RS256算法
     
     /**
      * JWT 中用户ID的键名
@@ -68,6 +56,19 @@ public class JwtUtil {
      */
     private static final String NICKNAME_KEY = "nickname";
 
+    /**
+     * JWT 中令牌类型的键名
+     */
+    private static final String TOKEN_TYPE_KEY = "type";
+    /**
+     * JWT 中访问令牌类型的值
+     */
+    private static final String ACCESS_TOKEN_TYPE = "access";
+    /**
+     * JWT 中刷新令牌类型的值
+     */
+    private static final String REFRESH_TOKEN_TYPE = "refresh";
+
     
 
     
@@ -76,95 +77,80 @@ public class JwtUtil {
      */
     @PostConstruct
     public void init() {
-        // 确保密钥长度足够安全（至少32字符）
-        if (secretKey.length() < 32) {
-            secretKey = secretKey + "UoL@f8YP#rKWZ9XtE3bGjMCd76qvN1AsXz!Np2GcV@87jYKqRUM#wfLBtd9A3Er5";
+        try {
+            Resource resource = jwtProperties.getLocation();
+            String password = jwtProperties.getPassword();
+            String alias = jwtProperties.getAlias();
+
+            if (resource == null || !resource.exists()) {
+                throw new IllegalStateException("JWT密钥库文件未找到，请检查配置: " + jwtProperties.getLocation());
+            }
+
+            KeyStore keyStore = KeyStore.getInstance("JKS");
+            try (InputStream is = resource.getInputStream()) {
+                keyStore.load(is, password.toCharArray());
+            }
+
+            // 从密钥库中获取私钥和公钥
+            this.privateKey = (PrivateKey) keyStore.getKey(alias, password.toCharArray());
+            this.publicKey = keyStore.getCertificate(alias).getPublicKey();
+
+            if (this.privateKey == null || this.publicKey == null) {
+                throw new IllegalStateException("在JKS文件中找不到别名为 '" + alias + "' 的密钥对");
+            }
+
+            // log.info("JWT工具类初始化成功，使用RS256非对称加密。");
+
+        } catch (Exception e) {
+            log.error("初始化JWT工具类失败，无法加载JKS密钥库", e);
+            // 抛出运行时异常，使服务启动失败，以便及时发现配置问题
+            throw new RuntimeException("初始化JWT工具类失败，请检查JKS配置", e);
         }
-        this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
-//        log.info("JWT工具类初始化完成，过期时间: {}小时, 刷新时间: {}小时", expirationHours, refreshHours);
     }
     
-    /**
-     * 生成 JWT 令牌
-     * 
-     * @param userId 用户ID
-     * @param username 用户名
-     * @return JWT令牌字符串
+      /**
+     * 生成 JWT 访问令牌
      */
     public String generateAccessToken(Long userId, String username, String nickname) {
-        if (userId == null || StrUtil.isBlank(username)) {
-            throw new AuthException("用户ID和用户名不能为空");
-        }
-        
-        try {
-            Date now = new Date();
-            Date expiration = DateUtil.offsetHour(now, expirationHours);
-            // Date expiration = DateUtil.offsetMinute(now, 1); // 测试用：1分钟过期
-            
-            // 构建JWT载荷
-            Map<String, Object> claims = new HashMap<>();
-            claims.put(USER_ID_KEY, userId);
-            claims.put(USERNAME_KEY, username);
-            claims.put(NICKNAME_KEY, nickname);
-            
-            // 生成JWT
-            String token = Jwts.builder()
-                    .setClaims(claims)
-                    .setSubject(username)
-                    .setIssuedAt(now)
-                    .setExpiration(expiration)
-                    .signWith(key, SIGNATURE_ALGORITHM)
-                    .claim("type", "access")
-                    .compact();
-            
-            // log.debug("生成JWT成功，用户ID: {}, 用户名: {}, 过期时间: {}", userId, username, expiration);
-            return token;
-            
-        } catch (Exception e) {
-            log.error("生成JWT失败，用户ID: {}, 用户名: {}", userId, username, e);
-            throw new AuthException("生成访问令牌失败");
-        }
+        return generateToken(userId, username, nickname, jwtProperties.getExpiration(), ACCESS_TOKEN_TYPE);
     }
-    
+
     /**
-     * 生成刷新令牌
-     * 
-     * @param userId 用户ID
-     * @param username 用户名
-     * @return 刷新令牌字符串
+     * 生成 JWT 刷新令牌
      */
     public String generateRefreshToken(Long userId, String username, String nickname) {
-        if (userId == null || StrUtil.isBlank(username)) {
+        return generateToken(userId, username, nickname, jwtProperties.getRefresh(), REFRESH_TOKEN_TYPE);
+    }
+
+    /**
+     * 通用令牌生成方法
+     */
+    private String generateToken(Long userId, String username, String nickname, Integer ttl, String tokenType) {
+        if (userId == null || username == null || username.trim().isEmpty()) {
             throw new AuthException("用户ID和用户名不能为空");
         }
-        
+
         try {
             Date now = new Date();
-            Date expiration = DateUtil.offsetHour(now, refreshHours);
-            // Date expiration = DateUtil.offsetMinute(now, 2); // 测试用：2分钟过期
-            
-            // 刷新令牌只包含基本信息
+            Date expiration = new Date(now.getTime() + ttl * 60 * 60 * 1000);
+
             Map<String, Object> claims = new HashMap<>();
             claims.put(USER_ID_KEY, userId);
             claims.put(USERNAME_KEY, username);
             claims.put(NICKNAME_KEY, nickname);
-            claims.put("type", "refresh");
-            
-            String refreshToken = Jwts.builder()
+            claims.put(TOKEN_TYPE_KEY, tokenType);
+
+            return Jwts.builder()
                     .setClaims(claims)
                     .setSubject(username)
                     .setIssuedAt(now)
                     .setExpiration(expiration)
-                    .signWith(key, SIGNATURE_ALGORITHM)
-                    .claim("type", "refresh")
+                    .signWith(this.privateKey, SIGNATURE_ALGORITHM) //  使用私钥和RS256签名
                     .compact();
-            
-            // log.debug("生成刷新令牌成功，用户ID: {}, 用户名: {}, 过期时间: {}", userId, username, expiration);
-            return refreshToken;
-            
+
         } catch (Exception e) {
-            log.error("生成刷新令牌失败，用户ID: {}, 用户名: {}", userId, username, e);
-            throw new AuthException("生成刷新令牌失败");
+            log.error("生成JWT失败，用户ID: {}, 用户名: {}", userId, username, e);
+            throw new AuthException("生成令牌失败");
         }
     }
     
@@ -183,7 +169,7 @@ public class JwtUtil {
         
         try {
             return Jwts.parserBuilder()
-                    .setSigningKey(key)
+                    .setSigningKey(this.publicKey)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();

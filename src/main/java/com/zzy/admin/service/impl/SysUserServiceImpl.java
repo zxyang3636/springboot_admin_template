@@ -32,10 +32,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements SysUserService {
 
-    @Value("${jwt.salt}")
+    @Value("${spring-admin.security.salt}")
     private String salt;
 
-    @Value("${jwt.refresh}")
+    @Value("${spring-admin.jwt.refresh}")
     private Long hour;
 
     private final JwtUtil jwtUtil;
