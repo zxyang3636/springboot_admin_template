@@ -71,5 +71,17 @@ public class SysUser implements Serializable {
     @TableField(value = "update_time")
     private Date updateTime;
 
+    /**
+     * AES密钥(加密+base64编码)
+     */
+    @TableField(exist = false)
+    private String aesKey;
+
+    /**
+     * 初始化向量(base64编码)
+     */
+    @TableField(exist = false)
+    private String decodeIv;
+
     private static final long serialVersionUID = 1L;
 }

@@ -6,11 +6,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import cn.hutool.core.util.StrUtil;
+import com.zzy.admin.annotation.AnonymousAccess;
 import com.zzy.admin.common.UserContext;
 import com.zzy.admin.common.UserContextHolder;
 import com.zzy.admin.exception.AuthException;
 import com.zzy.admin.utils.JwtUtil;
 
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.stereotype.Component;
 
@@ -40,6 +42,21 @@ public class LoginInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         try {
+            // 1. 判断请求的处理器是不是一个方法。如果不是（比如是请求静态资源），直接放行
+            if (!(handler instanceof HandlerMethod)) {
+                return true;
+            }
+
+            // 2. 将handler强转为HandlerMethod，从中获取方法信息
+            HandlerMethod handlerMethod = (HandlerMethod) handler;
+
+            // 3. 从方法上查找是否存在 @AnonymousAccess 注解
+            AnonymousAccess anonymousAccess = handlerMethod.getMethodAnnotation(AnonymousAccess.class);
+
+            // 4. 如果找到了注解，说明这是个公开接口，直接放行
+            if (anonymousAccess != null) {
+                return true;
+            }
             // 获取令牌
             String token = extractToken(request);
             if (StrUtil.isBlank(token)) {
@@ -59,8 +76,6 @@ public class LoginInterceptor implements HandlerInterceptor {
             throw new AuthException("系统繁忙，请稍后再试");
         }
     }
-
-
 
     /**
      * 请求处理完成后执行

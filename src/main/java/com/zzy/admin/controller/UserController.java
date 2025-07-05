@@ -1,11 +1,8 @@
 package com.zzy.admin.controller;
 
 import com.zzy.admin.common.Result;
-import com.zzy.admin.common.UserContext;
-import com.zzy.admin.common.UserContextHolder;
 import com.zzy.admin.domain.dto.RefreshRequest;
 import com.zzy.admin.domain.po.SysUser;
-import com.zzy.admin.domain.vo.UserVO;
 import com.zzy.admin.service.SysUserService;
 
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 
 import com.zzy.admin.annotation.LogRecord;
+import com.zzy.admin.annotation.AnonymousAccess;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +36,7 @@ public class UserController {
      */
     @PostMapping("/login")
     @LogRecord(value = "登录", businessType = "认证")
+    @AnonymousAccess
     public Result<?> login(@RequestBody SysUser sysUser) {
         return sysUserService.login(sysUser);
     }
@@ -54,6 +53,7 @@ public class UserController {
      * 退出登录
      */
     @PostMapping("/logout")
+    @AnonymousAccess
     @LogRecord(value = "退出登录", businessType = "退出登录")
     public Result<Void> logout(HttpServletRequest request) {
         return sysUserService.logout(request);
@@ -63,6 +63,7 @@ public class UserController {
      * 刷新令牌
      */
     @PostMapping("/refresh")
+    @AnonymousAccess
     @LogRecord(value = "刷新令牌", businessType = "认证")
     public Result<?> refreshToken(@RequestBody RefreshRequest refreshRequest) {
         return sysUserService.refreshToken(refreshRequest);

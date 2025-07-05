@@ -77,7 +77,7 @@ public class Result<T> {
     /**
      * 成功返回（自定义消息）
      */
-    public static <T> Result<T> success(String message) {
+    public static <T> Result<T> successMsg(String message) {
         return new Result<>(ResultCode.SUCCESS.getCode(), message, null);
     }
 

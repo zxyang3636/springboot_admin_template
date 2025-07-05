@@ -1,5 +1,6 @@
 package com.zzy.admin.service.impl;
 
+import cn.hutool.core.codec.Base64Decoder;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.crypto.SecureUtil;
 import com.zzy.admin.common.constant.RedisConstant;
@@ -7,12 +8,18 @@ import com.zzy.admin.common.Result;
 import com.zzy.admin.domain.dto.RefreshRequest;
 import com.zzy.admin.domain.vo.UserVO;
 import com.zzy.admin.exception.BusinessException;
+import com.zzy.admin.utils.CryptoUtils;
 import com.zzy.admin.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.security.PrivateKey;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+
+import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -25,7 +32,6 @@ import com.zzy.admin.service.SysUserService;
 import com.zzy.admin.common.UserContextHolder;
 import com.zzy.admin.common.UserContext;
 import lombok.extern.slf4j.Slf4j;
-
 
 @Slf4j
 @Service
@@ -50,7 +56,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     @Override
     public Result<?> login(SysUser sysUser) {
         String username = sysUser.getUsername();
-        String password = SecureUtil.md5(sysUser.getPassword() + salt);
+        String password = sysUser.getPassword();
+        String aesKey = sysUser.getAesKey();
+        String iv = sysUser.getDecodeIv();
+        // 解密密码
+        String decryptPassword = decryptPassword(password, aesKey, iv);
+        password = SecureUtil.md5(decryptPassword + salt);
         SysUser user = queryUser(username);
         if (ObjUtil.isEmpty(user)) {
             throw new BusinessException("用户不存在");
@@ -116,7 +127,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             // 尝试从ThreadLocal获取用户上下文（如果token有效）
             UserContext userContext = UserContextHolder.getContext();
             Long userId = null;
-            
+
             if (userContext != null) {
                 // token有效的情况
                 userId = userContext.getUserId();
@@ -132,21 +143,21 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                     }
                 }
             }
-            
+
             // 如果获取到了用户ID，清理相关数据
             if (userId != null) {
                 // 删除刷新令牌
                 redisTemplate.delete(RedisConstant.REFRESH_KEY + userId);
-//                log.info("用户退出登录成功，用户ID: {}", userId);
+                // log.info("用户退出登录成功，用户ID: {}", userId);
             } else {
                 log.info("用户退出登录，但无法获取用户ID");
             }
-            
+
             // 清除ThreadLocal（如果有的话）
             UserContextHolder.clearContext();
-            
+
             return Result.success();
-            
+
         } catch (Exception e) {
             log.error("退出登录处理异常", e);
             // 即使出现异常，也返回成功，因为退出登录应该总是成功的
@@ -181,7 +192,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 .one();
     }
 
-        /**
+    /**
      * 从请求中提取令牌
      */
     private String extractToken(HttpServletRequest request) {
@@ -190,5 +201,36 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             return authorization.substring(7);
         }
         return null;
+    }
+
+    /**
+     * 解密密码
+     * 
+     * @param password aes加密后的密码
+     * @param aesKey   加密+base64编码后的aesKey
+     * @param iv       base64编码后的iv
+     * @return 解密后的密码
+     */
+    private String decryptPassword(String password, String aesKey, String iv) {
+        // 私钥解密aesKey
+        String aes = null;
+        try {
+            String privateKey = jwtUtil.getPrivateKey();
+            PrivateKey privateKeyObj = CryptoUtils.stringToPrivateKey(privateKey);
+            aes = CryptoUtils.rsaDecrypt(aesKey, privateKeyObj);
+        } catch (Exception e) {
+            log.error("aesKey解密失败", e);
+            throw new BusinessException("aesKey解密失败");
+        }
+        try {
+            // aes解密password
+            SecretKey resultAesKey = CryptoUtils.stringToAesKey(aes);
+            byte[] ivBytes = Base64.getDecoder().decode(iv);
+            String decryptPassword = CryptoUtils.aesDecrypt(password, resultAesKey, new IvParameterSpec(ivBytes));
+            return decryptPassword;
+        } catch (Exception e) {
+            log.error("password解密失败", e);
+            throw new BusinessException("password解密失败");
+        }
     }
 }

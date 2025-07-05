@@ -3,12 +3,13 @@ package com.zzy.admin.utils;
 import javax.annotation.PostConstruct;
 
 import java.io.InputStream;
+import java.util.Base64;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Map;   
+import java.util.Map;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -18,13 +19,12 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.UnsupportedJwtException;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.beans.factory.annotation.Autowired;  
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import cn.hutool.core.util.StrUtil;
 import com.zzy.admin.exception.AuthException;
 import com.zzy.admin.config.JwtProperties;
-
 
 @Slf4j
 @Component
@@ -33,24 +33,23 @@ public class JwtUtil {
     private JwtProperties jwtProperties; // 注入JKS配置
 
     private PrivateKey privateKey; // 用于签名的私钥
-    private PublicKey publicKey;   // 用于验签的公钥
-
+    private PublicKey publicKey; // 用于验签的公钥
 
     /**
      * JWT 签名算法
      */
-    private static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.RS256;  // 使用RS256算法
-    
+    private static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.RS256; // 使用RS256算法
+
     /**
      * JWT 中用户ID的键名
      */
     private static final String USER_ID_KEY = "userId";
-    
+
     /**
      * JWT 中用户名的键名
      */
     private static final String USERNAME_KEY = "username";
-    
+
     /**
      * JWT 中用户名的键名
      */
@@ -69,9 +68,6 @@ public class JwtUtil {
      */
     private static final String REFRESH_TOKEN_TYPE = "refresh";
 
-    
-
-    
     /**
      * 初始化方法，在Bean创建后执行
      */
@@ -107,8 +103,8 @@ public class JwtUtil {
             throw new RuntimeException("初始化JWT工具类失败，请检查JKS配置", e);
         }
     }
-    
-      /**
+
+    /**
      * 生成 JWT 访问令牌
      */
     public String generateAccessToken(Long userId, String username, String nickname) {
@@ -145,7 +141,7 @@ public class JwtUtil {
                     .setSubject(username)
                     .setIssuedAt(now)
                     .setExpiration(expiration)
-                    .signWith(this.privateKey, SIGNATURE_ALGORITHM) //  使用私钥和RS256签名
+                    .signWith(this.privateKey, SIGNATURE_ALGORITHM) // 使用私钥和RS256签名
                     .compact();
 
         } catch (Exception e) {
@@ -153,8 +149,7 @@ public class JwtUtil {
             throw new AuthException("生成令牌失败");
         }
     }
-    
-    
+
     /**
      * 解析 JWT 令牌
      * 
@@ -166,14 +161,14 @@ public class JwtUtil {
         if (StrUtil.isBlank(token)) {
             throw new AuthException("令牌不能为空");
         }
-        
+
         try {
             return Jwts.parserBuilder()
                     .setSigningKey(this.publicKey)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-            
+
         } catch (ExpiredJwtException e) {
             // log.warn("JWT令牌已过期: {}", e.getMessage());
             throw new AuthException("访问令牌已过期，请重新登录");
@@ -194,7 +189,7 @@ public class JwtUtil {
             throw new AuthException("令牌解析失败");
         }
     }
-    
+
     /**
      * 验证 JWT 令牌是否有效
      * 
@@ -210,7 +205,7 @@ public class JwtUtil {
             return false;
         }
     }
-    
+
     /**
      * 从令牌中获取用户ID
      * 
@@ -220,7 +215,7 @@ public class JwtUtil {
     public Long getUserIdFromToken(String token) {
         Claims claims = parseToken(token);
         Object userId = claims.get(USER_ID_KEY);
-        
+
         try {
             if (userId instanceof Number) {
                 return ((Number) userId).longValue();
@@ -233,7 +228,7 @@ public class JwtUtil {
             throw new AuthException("令牌中用户ID格式错误: " + userId);
         }
     }
-    
+
     /**
      * 从令牌中获取用户名
      * 
@@ -256,7 +251,6 @@ public class JwtUtil {
         return claims.get(NICKNAME_KEY, String.class);
     }
 
-    
     /**
      * 获取令牌的过期时间
      * 
@@ -267,7 +261,7 @@ public class JwtUtil {
         Claims claims = parseToken(token);
         return claims.getExpiration();
     }
-    
+
     /**
      * 获取令牌的签发时间
      * 
@@ -278,7 +272,7 @@ public class JwtUtil {
         Claims claims = parseToken(token);
         return claims.getIssuedAt();
     }
-    
+
     /**
      * 检查令牌是否即将过期（距离过期时间小于1小时）
      * 
@@ -297,7 +291,7 @@ public class JwtUtil {
             return true;
         }
     }
-    
+
     /**
      * 刷新令牌（基于现有令牌生成新令牌）
      * 
@@ -307,21 +301,21 @@ public class JwtUtil {
     public String refreshToken(String token) {
         try {
             parseToken(token);
-            
+
             Long userId = getUserIdFromToken(token);
             String username = getUsernameFromToken(token);
             String nickname = getNicknameFromToken(token);
             String newToken = generateAccessToken(userId, username, nickname);
             log.info("刷新JWT令牌成功，用户ID: {}, 用户名: {}", userId, username);
-            
+
             return newToken;
-            
+
         } catch (Exception e) {
             log.error("刷新JWT令牌失败", e);
             throw new AuthException("刷新令牌失败");
         }
     }
-    
+
     /**
      * 获取令牌中的所有声明信息
      * 
@@ -332,7 +326,7 @@ public class JwtUtil {
         Claims claims = parseToken(token);
         return new HashMap<>(claims);
     }
-    
+
     /**
      * 检查令牌类型是否为刷新令牌
      * 
@@ -342,10 +336,28 @@ public class JwtUtil {
     public boolean isRefreshToken(String token) {
         try {
             Claims claims = parseToken(token);
-            return "refresh".equals(claims.get("type"));
+            return REFRESH_TOKEN_TYPE.equals(claims.get(TOKEN_TYPE_KEY));
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * 获取Base64编码的公钥字符串
+     *
+     * @return Base64编码的公钥
+     */
+    public String getPublicKey() {
+        return Base64.getEncoder().encodeToString(this.publicKey.getEncoded());
+    }
+
+    /**
+     * 获取Base64编码的私钥字符串
+     *
+     * @return Base64编码的私钥
+     */
+    public String getPrivateKey() {
+        return Base64.getEncoder().encodeToString(this.privateKey.getEncoded());
     }
 
 }
