@@ -42,6 +42,19 @@
         </option>
         <option name="tableGenerateConfigs">
           <map>
+            <entry key="spring_admin:product_management">
+              <value>
+                <TableGenerateConfig>
+                  <option name="batchInsert" value="true" />
+                  <option name="generatedKey" value="" />
+                  <option name="javaModelName" value="ProductManagement" />
+                  <option name="moduleName" value="springboot_admin_template" />
+                  <option name="sequenceColumn" value="" />
+                  <option name="sequenceId" value="" />
+                  <option name="useActualColumnName" value="false" />
+                </TableGenerateConfig>
+              </value>
+            </entry>
             <entry key="spring_admin:sys_user">
               <value>
                 <TableGenerateConfig>

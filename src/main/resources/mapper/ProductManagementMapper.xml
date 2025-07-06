@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zzy.admin.mapper.ProductManagementMapper">
+  <resultMap id="BaseResultMap" type="com.zzy.admin.domain.po.BrandManagement">
+    <!--@mbg.generated-->
+    <!--@Table brand_management-->
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="brand_name" jdbcType="VARCHAR" property="brandtName" />
+    <result column="logo_url" jdbcType="LONGVARCHAR" property="logoUrl" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="is_show" jdbcType="INTEGER" property="isShow" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, brand_name, logo_url, create_time, update_time, is_show
+  </sql>
+  <insert id="batchInsert" parameterType="map">
+    <!--@mbg.generated-->
+    insert into product_management
+    (id, brand_name, logo_url, create_time, update_time, is_show)
+    values
+    <foreach collection="list" item="item" separator=",">
+      (#{item.id,jdbcType=BIGINT}, #{item.productName,jdbcType=VARCHAR}, #{item.logoUrl,jdbcType=LONGVARCHAR}, 
+        #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateTime,jdbcType=TIMESTAMP}, #{item.isShow,jdbcType=INTEGER}
+        )
+    </foreach>
+  </insert>
+</mapper>

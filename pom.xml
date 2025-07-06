@@ -12,10 +12,11 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <mybatis-plus.version>3.5.3.1</mybatis-plus.version>
+        <mybatis-plus.version>3.5.4</mybatis-plus.version>
         <fastjson2.version>2.0.48</fastjson2.version>
         <mysql.version>8.0.32</mysql.version>
         <jjwt.version>0.11.5</jjwt.version>
+        <page-helper.version>1.4.6</page-helper.version>
     </properties>
 
     <parent>
@@ -88,6 +89,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        <!--pageHelper-->
+        <dependency>
+            <groupId>com.github.pagehelper</groupId>
+            <artifactId>pagehelper-spring-boot-starter</artifactId>
+            <version>${page-helper.version}</version>
         </dependency>
     </dependencies>
 
