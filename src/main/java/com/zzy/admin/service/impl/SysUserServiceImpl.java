@@ -63,7 +63,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         // 解密密码
         String decryptPassword = decryptPassword(password, aesKey, iv);
         // password = SecureUtil.md5(decryptPassword + salt);
-        password = PasswordUtils.encode(decryptPassword);
+//        password = PasswordUtils.encode(decryptPassword);
         SysUser user = queryUser(username);
         if (ObjUtil.isEmpty(user)) {
             throw new BusinessException("用户不存在");
@@ -72,7 +72,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             throw new BusinessException("账号已被禁用！");
         }
         String dbPassword = user.getPassword();
-        if (!PasswordUtils.matches(password, dbPassword)) {
+        if (!PasswordUtils.matches(decryptPassword, dbPassword)) {
             throw new BusinessException("账号或密码错误");
         }
         // if (!password.equals(dbPassword)) {

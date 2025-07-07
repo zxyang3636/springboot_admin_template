@@ -1,15 +1,16 @@
 package com.zzy.admin.controller;
 
+import cn.hutool.core.lang.Snowflake;
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.zzy.admin.common.Result;
 import com.zzy.admin.domain.po.BrandManagement;
+import com.zzy.admin.exception.ParamException;
 import com.zzy.admin.service.BrandManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -22,15 +23,18 @@ import java.util.List;
  * @description 品牌管理
  */
 @RestController
-@RequestMapping("/product")
+@RequestMapping("/brand")
 //@RequiredArgsConstructor
 public class BrandManageController {
 
     @Autowired
     private BrandManagementService brandManagementService;
 
+    private Snowflake id = IdUtil.getSnowflake(23, 12);
+
     /**
      * 获取品牌列表
+     *
      * @param pageNum
      * @param pageSize
      * @return
@@ -45,5 +49,14 @@ public class BrandManageController {
                 .list();
         PageInfo<BrandManagement> pageInfo = new PageInfo<>(brandManagementList);
         return Result.success(pageInfo);
+    }
+
+    @PostMapping("/insertTrademark")
+    public Result<?> insertTrademark(@RequestBody BrandManagement brandManagement) {
+        if (StrUtil.isBlank(brandManagement.getBrandName()) || StrUtil.isBlank(brandManagement.getLogoUrl())) {
+            throw new ParamException();
+        }
+        brandManagement.setId(id.nextId());
+        return brandManagementService.save(brandManagement) ? Result.success() : Result.fail();
     }
 }
