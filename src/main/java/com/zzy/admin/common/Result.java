@@ -18,7 +18,6 @@ import lombok.Data;
  * @param <T> 数据类型
  */
 @Data
-@JsonInclude(JsonInclude.Include.NON_NULL) // 空值不序列化
 public class Result<T> {
 
     /**

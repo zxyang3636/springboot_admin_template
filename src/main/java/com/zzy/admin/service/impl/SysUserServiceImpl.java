@@ -10,6 +10,7 @@ import com.zzy.admin.domain.vo.UserVO;
 import com.zzy.admin.exception.BusinessException;
 import com.zzy.admin.utils.CryptoUtils;
 import com.zzy.admin.utils.JwtUtil;
+import com.zzy.admin.utils.PasswordUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -61,7 +62,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         String iv = sysUser.getDecodeIv();
         // 解密密码
         String decryptPassword = decryptPassword(password, aesKey, iv);
-        password = SecureUtil.md5(decryptPassword + salt);
+        // password = SecureUtil.md5(decryptPassword + salt);
+        password = PasswordUtils.encode(decryptPassword);
         SysUser user = queryUser(username);
         if (ObjUtil.isEmpty(user)) {
             throw new BusinessException("用户不存在");
@@ -70,9 +72,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             throw new BusinessException("账号已被禁用！");
         }
         String dbPassword = user.getPassword();
-        if (!password.equals(dbPassword)) {
+        if (!PasswordUtils.matches(password, dbPassword)) {
             throw new BusinessException("账号或密码错误");
         }
+        // if (!password.equals(dbPassword)) {
+        //     throw new BusinessException("账号或密码错误");
+        // }
         // 签发
         String accessToken = jwtUtil.generateAccessToken(user.getId(), username, user.getNickname());
         String refreshToken = jwtUtil.generateRefreshToken(user.getId(), username, user.getNickname());

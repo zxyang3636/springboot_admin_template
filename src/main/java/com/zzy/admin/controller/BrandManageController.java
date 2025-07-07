@@ -19,7 +19,7 @@ import java.util.List;
  * @author zzy
  * @className ProductManageController
  * @date 2025/7/6
- * @description TODO
+ * @description 品牌管理
  */
 @RestController
 @RequestMapping("/product")
@@ -29,6 +29,12 @@ public class BrandManageController {
     @Autowired
     private BrandManagementService brandManagementService;
 
+    /**
+     * 获取品牌列表
+     * @param pageNum
+     * @param pageSize
+     * @return
+     */
     @GetMapping("/getProductList/{pageNum}/{pageSize}")
     public Result<?> getProductList(@PathVariable("pageNum") Integer pageNum, @PathVariable("pageSize") Integer pageSize) {
         PageHelper.startPage(pageNum, pageSize);

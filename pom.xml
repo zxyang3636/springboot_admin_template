@@ -96,6 +96,11 @@
             <artifactId>pagehelper-spring-boot-starter</artifactId>
             <version>${page-helper.version}</version>
         </dependency>
+        <!-- Spring Security -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
     </dependencies>
 
     <!-- 构建插件 -->
