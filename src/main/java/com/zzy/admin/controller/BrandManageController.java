@@ -24,7 +24,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/brand")
-//@RequiredArgsConstructor
+// @RequiredArgsConstructor
 public class BrandManageController {
 
     @Autowired
@@ -40,7 +40,8 @@ public class BrandManageController {
      * @return
      */
     @GetMapping("/getProductList/{pageNum}/{pageSize}")
-    public Result<?> getProductList(@PathVariable("pageNum") Integer pageNum, @PathVariable("pageSize") Integer pageSize) {
+    public Result<?> getProductList(@PathVariable("pageNum") Integer pageNum,
+            @PathVariable("pageSize") Integer pageSize) {
         PageHelper.startPage(pageNum, pageSize);
         List<BrandManagement> brandManagementList = brandManagementService.lambdaQuery()
                 .eq(BrandManagement::getIsShow, 0)
@@ -51,12 +52,44 @@ public class BrandManageController {
         return Result.success(pageInfo);
     }
 
+    /**
+     * 添加品牌
+     *
+     * @param brandManagement
+     * @return
+     */
     @PostMapping("/insertTrademark")
     public Result<?> insertTrademark(@RequestBody BrandManagement brandManagement) {
         if (StrUtil.isBlank(brandManagement.getBrandName()) || StrUtil.isBlank(brandManagement.getLogoUrl())) {
             throw new ParamException();
         }
         brandManagement.setId(id.nextId());
-        return brandManagementService.save(brandManagement) ? Result.success() : Result.fail();
+        return brandManagementService.save(brandManagement) ? Result.successMsg("添加成功") : Result.fail("添加失败");
+    }
+
+    /**
+     * 删除品牌
+     *
+     * @param id
+     * @return
+     */
+    @DeleteMapping("/deleteTrademark/{id}")
+    public Result<?> deleteTrademark(@PathVariable("id") Long id) {
+        return brandManagementService.lambdaUpdate().eq(BrandManagement::getId, id).set(BrandManagement::getIsShow, 1)
+                .update() ? Result.successMsg("删除成功") : Result.fail("删除失败");
+    }
+
+    /**
+     * 修改品牌
+     *
+     * @param brandManagement
+     * @return
+     */
+    @PutMapping("/updateTrademark")
+    public Result<?> updateTrademark(@RequestBody BrandManagement brandManagement) {
+        if (StrUtil.isBlank(brandManagement.getBrandName()) || StrUtil.isBlank(brandManagement.getLogoUrl())) {
+            throw new ParamException();
+        }
+        return brandManagementService.updateById(brandManagement) ? Result.successMsg("修改成功") : Result.fail("修改失败");
     }
 }

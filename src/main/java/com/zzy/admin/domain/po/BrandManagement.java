@@ -7,11 +7,14 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.util.Date;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 
 @Data
 @Builder
@@ -20,6 +23,7 @@ import lombok.NoArgsConstructor;
 @TableName(value = "brand_management")
 public class BrandManagement implements Serializable {
     @TableId(value = "id", type = IdType.INPUT)
+    @JsonSerialize(using = ToStringSerializer.class)
     private Long id;
 
     @TableField(value = "brand_name")
