@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zzy.admin.mapper.AttributeValuesMapper">
+  <resultMap id="BaseResultMap" type="com.zzy.admin.domain.po.AttributeValues">
+    <!--@mbg.generated-->
+    <!--@Table attribute_values-->
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="key_id" jdbcType="BIGINT" property="keyId" />
+    <result column="value" jdbcType="VARCHAR" property="value" />
+    <result column="status" jdbcType="INTEGER" property="status" />
+    <result column="created_time" jdbcType="TIMESTAMP" property="createdTime" />
+    <result column="updated_time" jdbcType="TIMESTAMP" property="updatedTime" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, key_id, `value`, `status`, created_time, updated_time
+  </sql>
+  <insert id="batchInsert" keyColumn="id" keyProperty="id" parameterType="map" useGeneratedKeys="true">
+    <!--@mbg.generated-->
+    insert into attribute_values
+    (key_id, `value`, `status`, created_time, updated_time)
+    values
+    <foreach collection="list" item="item" separator=",">
+      (#{item.keyId,jdbcType=BIGINT}, #{item.value,jdbcType=VARCHAR}, #{item.status,jdbcType=INTEGER}, 
+        #{item.createdTime,jdbcType=TIMESTAMP}, #{item.updatedTime,jdbcType=TIMESTAMP})
+    </foreach>
+  </insert>
+</mapper>
