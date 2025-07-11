@@ -1,12 +1,11 @@
 package com.zzy.admin.controller;
 
 import com.zzy.admin.common.Result;
+import com.zzy.admin.domain.dto.AttributeDTO;
+import com.zzy.admin.domain.vo.AttributeVO;
 import com.zzy.admin.service.CategoriesService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * packageName com.zzy.admin.controller
@@ -71,5 +70,10 @@ public class AttributeController {
     @GetMapping("/getAttributeInfo/{id}")
     public Result<?> getAttributeInfo(@PathVariable("id") String id) {
         return categoriesService.getAttributeInfo(id);
+    }
+
+    @PostMapping("/updateOrSaveAttribute")
+    public Result<?> updateOrSaveAttribute(@RequestBody AttributeDTO attributeDTO) {
+        return categoriesService.updateOrSaveAttribute(attributeDTO);
     }
 }

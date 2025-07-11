@@ -47,14 +47,14 @@ public class AttributeValues implements Serializable {
     /**
      * 创建时间
      */
-    @TableField(value = "created_time")
-    private Date createdTime;
+    @TableField(value = "create_time")
+    private Date createTime;
 
     /**
      * 更新时间
      */
-    @TableField(value = "updated_time")
-    private Date updatedTime;
+    @TableField(value = "update_time")
+    private Date updateTime;
 
     private static final long serialVersionUID = 1L;
 }

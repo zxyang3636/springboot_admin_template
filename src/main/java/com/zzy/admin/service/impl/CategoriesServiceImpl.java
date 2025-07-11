@@ -1,7 +1,11 @@
 package com.zzy.admin.service.impl;
 
+import cn.hutool.core.lang.Snowflake;
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.zzy.admin.common.Result;
+import com.zzy.admin.domain.dto.AttributeDTO;
 import com.zzy.admin.domain.po.AttributeKeys;
 import com.zzy.admin.domain.po.AttributeValues;
 import com.zzy.admin.domain.vo.AttributeVO;
@@ -29,6 +33,8 @@ import com.zzy.admin.service.CategoriesService;
 public class CategoriesServiceImpl extends ServiceImpl<CategoriesMapper, Categories> implements CategoriesService {
     private final CategoriesMapper categoriesMapper;
     private final AttributeValuesMapper attributeValuesMapper;
+    private final AttributeKeysMapper attributeKeysMapper;
+    private final Snowflake ID = IdUtil.createSnowflake(3, 6);
 
     @Override
     public int batchInsert(List<Categories> list) {
@@ -97,5 +103,26 @@ public class CategoriesServiceImpl extends ServiceImpl<CategoriesMapper, Categor
         }
 
         return Result.success(grouped.values());
+    }
+
+    @Override
+    public Result<?> updateOrSaveAttribute(AttributeDTO attributeDTO) {
+        String thirdLevelId = attributeDTO.getThirdLevelId();
+        if (StrUtil.isNotBlank(thirdLevelId)) { // 添加
+            List<String> valueList = attributeDTO.getValue();
+            String name = attributeDTO.getName();
+            // 保存keys
+            long keysId = ID.nextId();
+            AttributeKeys attributeKeys = AttributeKeys.builder().id(keysId).categoryId(Long.parseLong(thirdLevelId)).name(name).build();
+            attributeKeysMapper.insert(attributeKeys);
+            // 保存values
+            ArrayList<AttributeValues> collectAttributeValues = new ArrayList<>();
+            for (String value : valueList) {
+                AttributeValues attributeValues = AttributeValues.builder().id(ID.nextId()).keyId(keysId).value(value).createTime(new Date()).updateTime(new Date()).build();
+                collectAttributeValues.add(attributeValues);
+            }
+            attributeValuesMapper.batchInsert(collectAttributeValues);
+        }
+        return Result.successMsg("添加成功");
     }
 }
