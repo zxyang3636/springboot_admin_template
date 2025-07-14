@@ -32,6 +32,6 @@
   <select id="getAttributeInfo" resultType="com.zzy.admin.domain.vo.AttributeVO">
     SELECT attribute_keys.id as attributeKeysId, name,value FROM attribute_keys
     LEFT JOIN attribute_values ON  attribute_values.key_id = attribute_keys.id
-    WHERE attribute_keys.category_id = #{id,jdbcType=VARCHAR}
+    WHERE attribute_keys.category_id = #{id,jdbcType=VARCHAR} and attribute_keys.status = 0 and attribute_values.status = 0
   </select>
 </mapper>

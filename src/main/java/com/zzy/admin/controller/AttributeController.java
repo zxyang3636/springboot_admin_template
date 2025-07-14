@@ -72,8 +72,21 @@ public class AttributeController {
         return categoriesService.getAttributeInfo(id);
     }
 
+    /**
+     * @param attributeDTO: [attributeDTO]
+     * @return com.zzy.admin.common.Result<?>
+     * @author zxyang3636
+     * @date 2025/7/14
+     * {@link Result<?>}
+     * @description 添加或修改
+     */
     @PostMapping("/updateOrSaveAttribute")
     public Result<?> updateOrSaveAttribute(@RequestBody AttributeDTO attributeDTO) {
         return categoriesService.updateOrSaveAttribute(attributeDTO);
+    }
+
+    @DeleteMapping("/del/{attributeKeysId}")
+    public Result<?> delAttr(@PathVariable("attributeKeysId") Long attributeKeysId) {
+        return categoriesService.delAttr(attributeKeysId);
     }
 }

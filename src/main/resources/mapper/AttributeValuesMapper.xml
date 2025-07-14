@@ -18,10 +18,10 @@
   <insert id="batchInsert" keyColumn="id" keyProperty="id" parameterType="map" useGeneratedKeys="true">
     <!--@mbg.generated-->
     insert into attribute_values
-    (key_id, `value`, `status`, create_time, update_time)
+    (id,key_id, `value`, `status`, create_time, update_time)
     values
     <foreach collection="list" item="item" separator=",">
-      (#{item.keyId,jdbcType=BIGINT}, #{item.value,jdbcType=VARCHAR}, #{item.status,jdbcType=INTEGER}, 
+      (#{item.id,jdbcType=BIGINT},#{item.keyId,jdbcType=BIGINT}, #{item.value,jdbcType=VARCHAR}, #{item.status,jdbcType=INTEGER},
         #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateTime,jdbcType=TIMESTAMP})
     </foreach>
   </insert>

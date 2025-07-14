@@ -1,5 +1,7 @@
 package com.zzy.admin.domain.vo;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,6 +22,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class AttributeVO {
+    @JsonSerialize(using = ToStringSerializer.class)
     private Long attributeKeysId;
     private String name;
     private List<String> value;

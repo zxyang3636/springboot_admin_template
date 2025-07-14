@@ -22,4 +22,6 @@ public interface CategoriesService extends IService<Categories> {
     Result<?> getAttributeInfo(String id);
 
     Result<?> updateOrSaveAttribute(AttributeDTO attributeDTO);
+
+    Result<?> delAttr(Long attributeKeysId);
 }

@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import com.zzy.admin.mapper.CategoriesMapper;
 import com.zzy.admin.domain.po.Categories;
 import com.zzy.admin.service.CategoriesService;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -106,6 +107,7 @@ public class CategoriesServiceImpl extends ServiceImpl<CategoriesMapper, Categor
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Result<?> updateOrSaveAttribute(AttributeDTO attributeDTO) {
         String thirdLevelId = attributeDTO.getThirdLevelId();
         if (StrUtil.isNotBlank(thirdLevelId)) { // 添加
@@ -122,7 +124,53 @@ public class CategoriesServiceImpl extends ServiceImpl<CategoriesMapper, Categor
                 collectAttributeValues.add(attributeValues);
             }
             attributeValuesMapper.batchInsert(collectAttributeValues);
+            return Result.successMsg("添加成功");
         }
-        return Result.successMsg("添加成功");
+        // 修改
+        if (StrUtil.isBlank(attributeDTO.getName())) {
+            throw new BusinessException("输入参数错误");
+        }
+        for (String s : attributeDTO.getValue()) {
+            if (StrUtil.hasBlank(s)) {
+                throw new BusinessException("输入参数错误");
+            }
+        }
+        attributeValuesMapper.delete(Wrappers.<AttributeValues>lambdaQuery()
+                .eq(AttributeValues::getKeyId, attributeDTO.getAttributeKeysId()));
+        ArrayList<AttributeValues> result = new ArrayList<>();
+        for (String value : attributeDTO.getValue()) {
+            AttributeValues attributeValues = AttributeValues.builder()
+                    .id(ID.nextId())
+                    .value(value)
+                    .keyId(attributeDTO.getAttributeKeysId())
+                    .createTime(new Date())
+                    .updateTime(new Date())
+                    .status(0)
+                    .build();
+            result.add(attributeValues);
+        }
+        attributeValuesMapper.batchInsert(result);
+        attributeKeysMapper.update(
+                Wrappers.<AttributeKeys>lambdaUpdate()
+                        .eq(AttributeKeys::getId, attributeDTO.getAttributeKeysId())
+                        .set(AttributeKeys::getName, attributeDTO.getName())
+        );
+        return Result.successMsg("修改成功");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Result<?> delAttr(Long attributeKeysId) {
+        attributeValuesMapper.update(
+                Wrappers.<AttributeValues>lambdaUpdate()
+                        .eq(AttributeValues::getKeyId, attributeKeysId)
+                        .set(AttributeValues::getStatus, StatusEnum.Disable.getCode())
+        );
+        attributeKeysMapper.update(
+                Wrappers.<AttributeKeys>lambdaUpdate()
+                        .eq(AttributeKeys::getId, attributeKeysId)
+                        .set(AttributeKeys::getStatus, StatusEnum.Disable.getCode())
+        );
+        return Result.successMsg("删除成功");
     }
 }
